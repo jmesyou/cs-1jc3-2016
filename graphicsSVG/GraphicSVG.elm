@@ -6,6 +6,8 @@ module GraphicSVG
         , graphicsApp
         , notificationsApp
         , GetKeyState
+        , Keys(..)
+        , KeyState(..)
         , gameApp
         , line
         , polygon
@@ -122,10 +124,10 @@ other applications including keyboard presses and mouse movements.
 # Notifications App
 @docs notificationsApp
 # Game App
-@docs GetKeyState, gameApp
-# Shapes
+@docs GetKeyState, Keys, KeyState, gameApp
+# Stencils
 @docs line, polygon, openPolygon, ngon, triangle, square, rect, rectangle, roundedRect, circle, oval, wedge, graphPaper
-# Filling and Outlining
+# Creating Shapes by Filling and Outlining Stencils
 @docs filled, outlined, addOutline, rgb, rgba, hsl, hsla
 # Grouping Shapes
 @docs group
@@ -262,12 +264,18 @@ and to make sure we always use the right number of curve points
 and pull points (which is one more curve point than pull points),
 we define a special Pull type, whose first point is the point
 we pull towards, and second point is the end point for this
-curve segement.
+curve segmentsment.
 -}
 type Pull
     = Pull ( Float, Float ) ( Float, Float )
 
+{-| The possible states when you ask for a key's state.
 
+    JustDown is the frame after the key went down (will show up exactly once per press)
+    Down is a press that is continuing for more than one frame
+    JustUp is the frame after the key went up / stopped being pressed (will show up exactly once per press)
+    Up means the key is not currently being pressed nor was it recently released.
+-}
 type KeyState
     = JustDown
     | Down
@@ -733,7 +741,8 @@ maintainHelper key action =
 
 --Again, this shouldn't happen.
 
-
+{-| Includes all the regular keys. Ask for letters and numbers using "Key String."
+-}
 type Keys
     = Key String
     | Backspace
@@ -1818,7 +1827,7 @@ filled color shape =
     Inked color Nothing shape
 
 
-{-| Outline a Stencil with a Linetype and Color, creating a Shape.
+{-| Outline a Stencil with a LineType and Color, creating a Shape.
 
     circle 10
         |> outlined (solid 5) red
@@ -1836,7 +1845,7 @@ outlined style outlineClr shape =
 
     circle 10
         |> filled red
-        |> outlined (solid 5) white
+        |> addOutline (solid 5) white
 -}
 addOutline : LineType -> Color -> Shape notification -> Shape notification
 addOutline style outlineClr shape =
