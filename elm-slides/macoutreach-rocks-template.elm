@@ -20,10 +20,12 @@ init = {
 
 -- VIEW
 
-view model = let t = model.t 
-                 slide = Maybe.withDefault default (Array.get model.idx slides)
+myShapes model =
+  let
+    t = model.t
+    slide = Maybe.withDefault default (Array.get model.idx slides)
+  in (slide t ++ borders ++ navigators)
 
-             in collage 1000 500 (slide t ++ borders ++ navigators)
 
 -- UPDATE
 
@@ -66,14 +68,12 @@ update message model =
                               { model |
                                        t = max (model.t + 2.5 * model.a * model.r) 0
                               }
-    NextSlide -> { model |
-    t   = 0 ,
-    idx = min (model.idx + 1) (Array.length slides - 1) 
-  }
-    LastSlide -> { model |
-    t   = 0 ,
-    idx = max (model.idx - 1) 0
-  }
+    NextSlide -> { model | t   = 0
+                         , idx = min (model.idx + 1) (Array.length slides - 1)
+                 }
+    LastSlide -> { model | t   = 0
+                         , idx = max (model.idx - 1) 0
+                 }
 
 --- MISCELLANEOUS
 
