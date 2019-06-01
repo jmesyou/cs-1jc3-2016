@@ -1,23 +1,25 @@
 import GraphicSVG exposing (..)
+import GraphicSVG.App exposing (..)
 import Array
+import List exposing (range)
 
-
-type Message = GameTick Float GetKeyState --The tick needs to have Float and GetKeyState which handles key presses.
+type Message = Tick Float GetKeyState --The tick needs to have Float and GetKeyState which handles key presses.
               | NextSlide
               | LastSlide
 
 
 -- this is the main function, and for simple animations, you would only replace the view function, or edit it below
 
-main = gameApp GameTick {
-                            model = model
+main = gameApp Tick {
+                            model = init
+                        ,   title = "Big Data Presentation"
                         ,   view = view
                         ,   update = update
                         }
 
 -- MODEL
 
-model = {
+init = {
               t = 0 ,
             idx = 0 
         }
@@ -33,16 +35,14 @@ view model = let t = model.t
 
 update message model =
   case message of
-    GameTick tick (getKeyState,changeP1,changeP2) -> { model |
+    Tick tick (getKeyState,changeP1,changeP2) -> { model |
                                        t = model.t + 4 }
-    NextSlide -> { model |
-    t   = 0 ,
-    idx = min (model.idx + 1) (Array.length slides - 1) 
-  }
-    LastSlide -> { model |
-    t   = 0 ,
-    idx = max (model.idx - 1) 0
-  }
+    NextSlide -> { model | t   = 0
+                         , idx = min (model.idx + 1) (Array.length slides - 1)
+                 }
+    LastSlide -> { model | t   = 0
+                         , idx = max (model.idx - 1) 0
+                 }
 
 --- MISCELLANEOUS
 
@@ -110,7 +110,7 @@ slide1 t = [    foodline t
                                 + tranSin (t-1000) 0.3
                                 + tranSin (t-1300) 0.3
                                 + tranSin (t-1400) 5)
-              , title   
+              , bigDataTitle
                     |> move (-500,0)
                     |> fadeIn t 1500
               , instructions 
@@ -133,7 +133,7 @@ foodline t = group [ facebook
                     |> disappear t 1300
   ]
 
-title = group [text "BIG"
+bigDataTitle = group [text "BIG"
                     |> size 200
                     |> bold
                     |> customFont "Helvetica"
@@ -289,7 +289,7 @@ slide3 t =
 
     yLabel = "Insert Unit Here"
     xLabel = "Year"
-    title  = "DATA VOLUME"
+    slide3title  = "DATA VOLUME"
 
     label (l,_,_) = l
     number (_,n,_) = n
@@ -297,7 +297,7 @@ slide3 t =
 
     numBars = List.length rawData
     maxim = List.maximum (List.map number rawData)
-    rectangles = List.map2 mkRect rawData [0..numBars]
+    rectangles = List.map2 mkRect rawData (range 0 numBars)
 
     mkRect (str,n,clr) xPos =
       case maxim of
@@ -307,7 +307,7 @@ slide3 t =
         Just m  -> bar (width/(toFloat numBars)-10) ((trans ((t - 100 * toFloat xPos)/200) 1)*height*n/m) clr
                      |> move ((toFloat xPos)*(width/(toFloat numBars))-width/3,0 )
                      
-    xLabels = List.map2 mkXText rawData [0..numBars]
+    xLabels = List.map2 mkXText rawData (range 0 numBars)
 
     mkXText (str,n,clr) xPos = text str
                                  |> customFont "Arial"
@@ -317,11 +317,11 @@ slide3 t =
                                           ,-height/2-15)
     yNums = case maxim of
               Nothing -> []
-              Just m  -> List.map ((*)(m//10)) [0..10]
+              Just m  -> List.map ((*)(m//10)) (range 0 10)
 
-    yLabels = List.map2 mkYText yNums [0..10]
+    yLabels = List.map2 mkYText yNums <| List.map toFloat (range 0 10)
 
-    mkYText num pos = text (toString num)
+    mkYText num pos = text (String.fromInt num)
                     |> customFont "Arial"
                     |> filled black
                     |> move (-width/2-30,pos*height/10-140)
@@ -374,7 +374,7 @@ slide3 t =
 
               ]
 
-  in titleText title::xText::rectangles ++ xLabels ++ yLabels
+  in titleText slide3title::xText::rectangles ++ xLabels ++ yLabels
         ++ waves
 
 wave t clr = curve (0,0) [Pull (100,50*cos(t/50)) (200,0),
@@ -426,11 +426,13 @@ slide4 t = [ rect 2000 2000
                   |> move (0,-70)
             ]
 
-endlessTweets clr t h x = List.map (createTweet t clr h x) [0..15]
+endlessTweets clr t h x = List.map (createTweet t clr h x) (range 0 15)
 
-createTweet t clr h x n =  let y = if n % 2 == 0 then h*sin(t/25/x)
-                            else h*cos(t/25/x)
-                    in
+createTweet t clr h x n =
+  let
+    y = if modBy n 2 == 0 then h*sin(t/25/x)
+                      else h*cos(t/25/x)
+  in
                     tweet clr
                       |> move (-650 + mod (t + toFloat n * 81) 1300,
                                y)
@@ -512,24 +514,26 @@ fadeText t str offSet = text str
                         |> filled white
                         |> fadeIn t offSet
 
-wallOfBinary t = group (List.map (endlessBinary t) [0..10]) |> makeTransparent (0.5)
+wallOfBinary t = group (List.map (endlessBinary t) (range 0 10)) |> makeTransparent (0.5)
 
-endlessBinary t y = let x = if y%2 == 0 then 1 else -1
+endlessBinary t y = let x = if modBy y 2 == 0 then 1 else -1
                     in
                     group (List.map2 (binary t x) 
                               [0,1,0,0,0,1,0,1,0,1,0,0,0,1,0,1,
                                0,1,0,0,0,1,0,1,0,1,0,0,0,1,0,1]
-                              [0..31]) |> move (0,130 - toFloat y * 40)
+                              (range 0 31)) |> move (0,130 - toFloat y * 40)
 
 
-binary t  x n offSet=  let n' = n
-                    in
-                    text (toString n) 
-                      |> customFont "Courier New"
-                      |> size 25
-                      |> bold
-                      |> filled green
-                      |> move ((-650 + mod (t/4 + toFloat offSet * 40.5) 1300) * x,
+binary t x n offSet =
+  let
+    n_ = n
+  in
+    text (String.fromInt n)
+      |> customFont "Courier New"
+      |> size 25
+      |> bold
+      |> filled green
+      |> move ((-650 + mod (t/4 + toFloat offSet * 40.5) 1300) * x,
                                0)
                 
 
@@ -778,7 +782,7 @@ slide9 t = [ rect 1000 500
                   |> move (-700 + trans (t-800) 2000,0)   
                         ]
 
-locks t = group (List.map (lock t) [0..5])
+locks t = group (List.map (lock t << toFloat) (range 0 5))
 
 lock t n = let off = n * 162 in
            group [
@@ -834,7 +838,7 @@ slide10 t = [
                    |> move (-100,200)  
             ]
 
-barchart t = let bar' off = bar 20 (200 + off ^ 2 /8 + 30*sin(t/100-off)) blue |> move (20*off,0)
-                 bars = List.map bar' [0..49]
+barchart t = let bar_ off = bar 20 (200 + off ^ 2 /8 + 30*sin(t/100-off)) blue |> move (20*off,0)
+                 bars = List.map (bar_ << toFloat) (range 0 49)
              in
              group bars
