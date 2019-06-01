@@ -1,14 +1,17 @@
 import GraphicSVG exposing (..)
+import GraphicSVG.App exposing (..)
 import Array
+import List exposing (range)
 
-type Message = GameTick Float GetKeyState --The tick needs to have Float and GetKeyState which handles key presses.
+type Message = Tick Float GetKeyState --The tick needs to have Float and GetKeyState which handles key presses.
               | NextSlide
               | LastSlide
 
 -- this is the main function, and for simple animations, you would only replace the view function, or edit it below
 
-main = gameApp GameTick {
+main = gameApp Tick {
                             model = init
+                        ,   title = "Jobs Presentation"
                         ,   view = view
                         ,   update = update
                         }
@@ -34,7 +37,7 @@ view model = let t = model.t
 
 update message model =
   case message of
-    GameTick tick (getKeyState,changeP1,changeP2) -> 
+    Tick tick (getKeyState,changeP1,changeP2) ->
                               if (getKeyState LeftArrow) == JustDown then
                               { model |
                                   t   = 0 ,
@@ -71,14 +74,12 @@ update message model =
                               { model |
                                        t = max (model.t + 2.5 * model.a * model.r) 0
                               }
-    NextSlide -> { model |
-    t   = 0 ,
-    idx = min (model.idx + 1) (Array.length slides - 1) 
-  }
-    LastSlide -> { model |
-    t   = 0 ,
-    idx = max (model.idx - 1) 0
-  }
+    NextSlide -> { model | t   = 0
+                         , idx = min (model.idx + 1) (Array.length slides - 1)
+                 }
+    LastSlide -> { model | t   = 0
+                         , idx = max (model.idx - 1) 0
+                 }
 
 --- MISCELLANEOUS
 
@@ -375,7 +376,7 @@ makeBill t n =
 
 billGreen = rgb 133 187 101
 
-makeItRain t = group(List.map (makeBill t) [0..300])
+makeItRain t = group(List.map (makeBill t << toFloat) (range 0 300))
 
 -- This is just for AUTOMATIC bullets. You are free to make
 -- more customized bullets, but they will take a bit longer.
@@ -452,7 +453,7 @@ flames = curve (0,0)  [ Pull (10,-8) (20,0),
 
 -- Drove me insane
 
-curly = openPolygon (List.map getPoint [10..130])
+curly = openPolygon (List.map (getPoint << toFloat) (range 10 130))
 
 getPoint t= (getY (t/10), getX (t/10))
 
